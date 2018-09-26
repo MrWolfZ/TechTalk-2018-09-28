@@ -1,64 +1,6 @@
-// TODO: basic conditional types example
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-interface EventConstructor<T extends DomainEvent<T['kind']>> {
-  new(...args: any[]): T;
-  readonly KIND: T['kind'];
-}
-
-abstract class DomainEvent<TKind extends string = string> {
-  kind: TKind;
-  occurredOnEpoch: number;
-  eventVersion: number;
-
-  static readonly createBase = <T extends DomainEvent<T['kind']>>(
-    cons: EventConstructor<T>,
-    eventVersion = 1,
-  ) => (
-    customProps: Pick<T, Exclude<keyof T, keyof DomainEvent<T['kind']>>>,
-    ): T => {
-      const instance = new cons();
-      instance.kind = cons.KIND;
-      instance.occurredOnEpoch = Date.now();
-      instance.eventVersion = eventVersion;
-      Object.assign(instance, customProps);
-      return instance;
-    }
-}
-
-export class ServiceRequestReceived extends DomainEvent<typeof ServiceRequestReceived.KIND> {
-  invocationId: string;
-  path: string;
-  body: string;
-
-  static readonly KIND = 'service-invocation/ServiceRequestReceived';
-  static readonly create = DomainEvent.createBase(ServiceRequestReceived);
+export interface Boxed<T> {
+  __boxed: '';
+  value: T;
 }
 
 
@@ -81,29 +23,110 @@ export class ServiceRequestReceived extends DomainEvent<typeof ServiceRequestRec
 
 
 
-type EntityEventHandler<TEvent extends DomainEvent<TEvent['kind']> = DomainEvent> = (event: TEvent) => void;
 
-type EventOfKind<TEvent, TKind extends string> = TEvent extends DomainEvent<TKind> ? TEvent : never;
 
-type EventHandlerMap<TEvent extends DomainEvent> = {
-  [eventKind in TEvent['kind']]: EntityEventHandler<EventOfKind<TEvent, eventKind>>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export interface UnboxedArray<T> extends Array<T> {
+  [idx: number]: Unboxed<T>;
+}
+
+export type UnboxedObject<T> = {
+  [prop in keyof T]: Unboxed<T[prop]>;
 };
 
-interface BookWasPublished extends DomainEvent<'BOOK_PUBLISHED'> {
-  title: string;
+export type Unboxed<T> =
+  // (ab)use 'symbol' to catch 'any' typing
+  T extends Boxed<symbol[]> ? any
+  : T extends Boxed<symbol> ? any
+  : T extends Boxed<string> ? string
+  : T extends Boxed<number> ? number
+  : T extends Boxed<boolean> ? boolean
+  : T extends Boxed<(infer U)[]> ? U extends Boxed<any> ? UnboxedArray<U> : U[]
+  : T extends Boxed<infer U> ? U extends Boxed<any> ? UnboxedObject<U> : U
+  : T extends symbol[] ? any
+  : T extends symbol ? any
+  : T extends string ? string
+  : T extends number ? number
+  : T extends boolean ? boolean
+  : T extends (infer U)[] ? U extends Boxed<any> ? UnboxedArray<U> : U[]
+  : UnboxedObject<T>;
+
+export type BoxedString = Boxed<string>;
+export type UnboxedString = Unboxed<string>;
+export type UnboxedBoxedString = Unboxed<BoxedString>;
+
+export type BoxedNumberArray = Boxed<number[]>;
+export type UnboxedNumberArray = Unboxed<number[]>;
+export type UnboxedBoxedNumberArray = Unboxed<BoxedNumberArray>;
+
+export type BoxedBoxedBooleanArray = Boxed<Boxed<boolean>[]>;
+export type UnboxedBoxedBoxedBooleanArray = Unboxed<BoxedBoxedBooleanArray>;
+
+export let arr: UnboxedBoxedBoxedBooleanArray;
+export type T = typeof arr[number];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export function isBoxed<T = any>(value: any): value is Boxed<T> {
+  return !!value && (value as Boxed<any>).__boxed === '';
 }
 
-interface BookSoldOut extends DomainEvent<'BOOK_SOLD_OUT'> {
-  title: string;
+export function box<T>(value: T): Boxed<T> {
+  return {
+    __boxed: '',
+    value,
+  };
 }
 
-type DomainEvents = BookWasPublished | BookSoldOut;
+export function unbox<T>(value: T): Unboxed<T> {
+  if (['string', 'boolean', 'number', 'undefined'].indexOf(typeof value) >= 0 || value === null) {
+    return value as Unboxed<T>;
+  }
 
-export const EVENT_HANDLERS: EventHandlerMap<DomainEvents> = {
-  BOOK_PUBLISHED: event => {
-    console.log(event);
-  },
-  BOOK_SOLD_OUT: event => {
-    console.log(event);
-  },
-};
+  if (isBoxed<T>(value)) {
+    return value.value as Unboxed<T>;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(unbox) as Unboxed<T>;
+  }
+
+  return Object.keys(value).reduce((a, k) => Object.assign(a, { [k]: unbox(value[k as keyof T]) }), {} as Unboxed<T>);
+}
+
+

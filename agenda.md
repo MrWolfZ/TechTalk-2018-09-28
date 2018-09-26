@@ -7,3 +7,4 @@
 5. type inference
 6. mapped types
 7. conditional types
+8. use case: event driven code
