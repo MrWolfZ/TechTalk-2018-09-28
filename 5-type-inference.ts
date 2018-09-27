@@ -89,6 +89,86 @@ function getYear(input: Date | string) {
 
 
 
+function adjust(input: number | string) {
+  return input;
+}
+
+const res1 = adjust('foo');
+const res2 = adjust(42);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function adjust2<T extends number | string>(input: T) {
+  return input;
+}
+
+const res3 = adjust2('foo');
+const res4 = adjust2(42);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function adjust3(input: number): number;
+function adjust3(input: string): string;
+function adjust3(input: number | string) {
+  return input;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

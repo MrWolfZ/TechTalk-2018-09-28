@@ -113,15 +113,12 @@ const p: Exclude<DomainEvents['kind'], typeof eventKinds[number]> = undefined!;
 f(p);
 
 function f2<TEvent extends DomainEvent<TEvent['kind']>>() {
-  return <T1 extends TEvent['kind'] = never, T2 extends TEvent['kind'] = never>(t1?: T1, t2?: T2): Exclude<TEvent['kind'], T1 | T2> => {
+  return <T1 extends TEvent['kind']= never, T2 extends TEvent['kind']= never>(t1?: T1, t2?: T2): Exclude<TEvent['kind'], T1 | T2> => {
     return undefined!;
   };
 }
 
 f(f2<DomainEvents>()(BookWasPublished.KIND));
-
-
-
 
 
 
