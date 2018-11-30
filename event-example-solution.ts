@@ -69,6 +69,16 @@ export const bookWasPublished = BookWasPublished.create({
 
 
 
+
+
+
+
+
+
+
+
+
+
 export function filterEvents<TEvent extends DomainEvent<TEvent['kind']>>(...kinds: TEvent['kind'][]) {
   return (events: DomainEvent[]) => {
     return events.filter(e => kinds.indexOf(e.kind as any) >= 0) as TEvent[];
@@ -79,6 +89,18 @@ filterEvents<DomainEvents>(
   BookWasPublished.KIND,
   'foo',
 );
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -143,7 +165,17 @@ f(f2<DomainEvents>()(BookWasPublished.KIND));
 
 
 
-type EntityEventHandler<TEvent extends DomainEvent<TEvent['kind']> = DomainEvent<any>> = (event: TEvent) => void;
+
+
+
+
+
+
+
+
+
+
+type EntityEventHandler<TEvent extends DomainEvent = DomainEvent> = (event: TEvent) => void;
 
 type EventOfKind<TEvent, TKind extends string> = TEvent extends DomainEvent<TKind> ? TEvent : never;
 
